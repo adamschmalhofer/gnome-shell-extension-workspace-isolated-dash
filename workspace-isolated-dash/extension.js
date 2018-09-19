@@ -11,14 +11,6 @@ const WorkspaceIsolator = new Lang.Class({
 	Name: 'WorkspaceIsolator',
 
 	_init: function() {
-		if (global.display !== undefined) {
-			// we are on gnome-shell >3.29
-			this._display = global.display;
-			this._get_active_workspace = () => global.workspaceManager.get_active_workspace();
-		} else {
-			this._display = global.screen;
-			this._get_active_workspace = () => global.screen.get_active_workspace();
-		}
 		// Extend AppSystem to only return applications running on the active workspace
 		AppSystem._workspace_isolated_dash_nyuki_get_running = AppSystem.get_running;
 		AppSystem.get_running = function() {
@@ -83,9 +75,17 @@ const WorkspaceIsolator = new Lang.Class({
 		}
 	}
 });
+if (global.display !== undefined) {
+    // we are on gnome-shell >3.29
+    WorkspaceIsolator._display = global.display;
+    WorkspaceIsolator._get_active_workspace = function() { global.workspaceManager.get_active_workspace() };
+} else {
+    WorkspaceIsolator._display = global.screen;
+    WorkspaceIsolator._get_active_workspace = function() { global.screen.get_active_workspace() };
+}
 // Check if an application is on the active workspace
 WorkspaceIsolator.isActiveApp = function(app) {
-	return app.is_on_workspace(this._get_active_workspace());
+	return app.is_on_workspace(WorkspaceIsolator._get_active_workspace());
 };
 // Refresh dash
 WorkspaceIsolator.refresh = function() {
