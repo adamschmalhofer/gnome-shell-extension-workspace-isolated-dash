@@ -11,7 +11,7 @@ const WorkspaceIsolator = new Lang.Class({
 	Name: 'WorkspaceIsolator',
 
 	_init: function() {
-		if (global.screen === undefined) {
+		if (global.display !== undefined) {
 			// we are on gnome-shell >3.29
 			this._display = global.display;
 			this._get_active_workspace = () => global.workspaceManager.get_active_workspace();
