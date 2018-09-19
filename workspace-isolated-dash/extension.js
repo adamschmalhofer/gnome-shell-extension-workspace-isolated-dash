@@ -11,6 +11,14 @@ const WorkspaceIsolator = new Lang.Class({
 	Name: 'WorkspaceIsolator',
 
 	_init: function() {
+		if (global.screen === undefined) {
+			// we are on gnome-shell >3.29
+			this._display = global.display;
+			this._get_active_workspace = () => global.workspaceManager.get_active_workspace();
+		} else {
+			this._display = global.screen;
+			this._get_active_workspace = () => global.screen.get_active_workspace();
+		}
 		// Extend AppSystem to only return applications running on the active workspace
 		AppSystem._workspace_isolated_dash_nyuki_get_running = AppSystem.get_running;
 		AppSystem.get_running = function() {
@@ -44,7 +52,7 @@ const WorkspaceIsolator = new Lang.Class({
 		// - window moved to another workspace
 		// - window created
 		// - window closed
-		this._onRestackedId = global.display.connect('restacked', WorkspaceIsolator.refresh);
+		this._onRestackedId = this._display.connect('restacked', WorkspaceIsolator.refresh);
 	},
 
 	destroy: function() {
@@ -65,7 +73,7 @@ const WorkspaceIsolator = new Lang.Class({
 		}
 		// Disconnect the restacked signal
 		if (this._onRestackedId) {
-			global.display.disconnect(this._onRestackedId);
+			this._display.disconnect(this._onRestackedId);
 			this._onRestackedId = 0;
 		}
 		// Disconnect the switch-workspace signal
@@ -77,7 +85,7 @@ const WorkspaceIsolator = new Lang.Class({
 });
 // Check if an application is on the active workspace
 WorkspaceIsolator.isActiveApp = function(app) {
-	return app.is_on_workspace(global.workspaceManager.get_active_workspace());
+	return app.is_on_workspace(this._get_active_workspace());
 };
 // Refresh dash
 WorkspaceIsolator.refresh = function() {
